@@ -1,0 +1,35 @@
+name: Run Soul 50x
+
+on:
+  push:
+  schedule:
+    - cron: '0 * * * *'  # Every hour
+
+jobs:
+  soul:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        n: [1,2,3,4,5,6,7,8,9,10]  # 10 parallel runs
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Make SOUL binary executable
+        run: chmod +x SOUL
+
+      - name: Install Python dependencies
+        run: |
+          pip install flask
+          pip install pyngrok
+          pip install pymongo
+          pip install paramiko
+
+      - name: Run Spike.py
+        env:
+          MONGO_USER: ${{ secrets.MONGO_USER }}
+          MONGO_PASS: ${{ secrets.MONGO_PASS }}
+          MONGO_CLUSTER: ${{ secrets.MONGO_CLUSTER }}
+        run: |
+          # Build MongoDB URI from secrets
+          export MONGO_URI="mongodb+srv://${MONGO_USER}:${MONGO_PASS}@${MONGO_CLUSTER}/TEST?retryWrites=true&w=majority&appName=Cluster0"
+          python3 Spike.py
