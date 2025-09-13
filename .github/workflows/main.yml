@@ -1,0 +1,24 @@
+name: Run Soul 50x
+
+on:
+  push:
+  schedule:
+    - cron: '0 * * * *'  # Runs every hour
+
+jobs:
+  soul:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        n: [1,2,3,4,5,6,7,8,9,10]  # Run 10 jobs in parallel
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Make SOUL binary executable
+        run: chmod +x SOUL
+
+      - name: Install Python dependencies
+        run: pip install paramiko
+
+      - name: Run Spike.py
+        run: python3 Spike.py
