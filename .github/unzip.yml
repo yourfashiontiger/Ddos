@@ -11,7 +11,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Unzip the file
-        run: unzip yourfile.zip -d extracted/
+        run: unzip ddos.zip -d extracted/
 
       - name: Commit and Push
         run: |
