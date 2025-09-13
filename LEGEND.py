@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackContext
 from telegram.error import TelegramError
 
-TELEGRAM_BOT_TOKEN = '8463142543:AAGrcwG83s4h8uXjK4cBWwQbU4gOzbflgNk'
+TELEGRAM_BOT_TOKEN = '8253163911:AAGJBklglYDawG3CNFlmORXyVd68tyFBw7Y'
 ADMIN_USER_ID = 5619325814
 bot_access_free = True
 
